@@ -1,6 +1,6 @@
 ---
 title: "Chapter 7 Lab: Non-linear Modeling"
-author: "Your Name"
+author: "Chenghao Xia"
 date: "2024-01-05"
 output: html_document
 
@@ -129,8 +129,18 @@ data(College,package = "ISLR2")
 
 Your code:
 ```{r,echo=TRUE}
-#
-#
+set.seed(679)  
+train_index <- sample(1:nrow(College), 0.7 * nrow(College))
+train_data <- College[train_index, ]
+test_data <- College[-train_index, ]
+model <- lm(Outstate ~  Apps + Accept + Enroll + Top10perc, data = train_data)
+
+summary(model)
+
+predictions <- predict(model, newdata = test_data)
+
+rmse <- sqrt(mean((predictions - test_data$Outstate)^2))
+rmse
 ```
 
 Your answer:
@@ -148,8 +158,9 @@ Please write your answer in full sentences.
 
 Your code:
 ```{r,echo=TRUE}
-#
-#
+library(mgcv)
+gam_model <- gam(Outstate ~  s(Apps) + s(Accept) + s(Enroll) + s(Top10perc), data = train_data)
+
 ```
 
 Your answer:
@@ -166,8 +177,15 @@ Please write your answer in full sentences.
 
 Your code:
 ```{r,echo=TRUE}
-#
-#
+predictions <- predict(gam_model, newdata = test_data)
+
+rmse <- sqrt(mean((predictions - test_data$Outstate)^2))
+
+rsquared <- cor(predictions, test_data$Outstate)^2
+
+print(paste("RMSE:", rmse))
+print(paste("R-squared:", rsquared))
+
 ```
 
 Your answer:
@@ -184,8 +202,11 @@ Please write your answer in full sentences.
 
 Your code:
 ```{r,echo=TRUE}
-#
-#
+par(mfrow = c(2, 2))
+plot(gam_model, select = 1) 
+plot(gam_model, select = 2)  
+plot(gam_model, select = 3)  
+plot(gam_model, select = 4) 
 ```
 
 Your answer:
