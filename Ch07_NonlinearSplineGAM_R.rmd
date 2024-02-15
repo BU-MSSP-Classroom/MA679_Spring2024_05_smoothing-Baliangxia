@@ -358,8 +358,16 @@ This question uses the variables dis (the weighted mean of distances to five Bos
 
 Your code:
 ```{r,echo=TRUE}
-#
-#
+library(MASS)
+data("Boston")
+
+fit <- lm(nox ~ poly(dis, 3, raw = TRUE), data = Boston)
+
+summary(fit)
+
+plot(Boston$dis, Boston$nox, xlab = "Distance to Employment Centers", ylab = "NOx Concentration", main = "Cubic Polynomial Regression", col = "blue")
+lines(sort(Boston$dis), fitted(fit)[order(Boston$dis)], col = "red", lwd = 2)
+
 ```
 
 Your answer:
@@ -375,8 +383,26 @@ Please write your answer in full sentences.
 
 Your code:
 ```{r,echo=TRUE}
-#
-#
+rss_values <- numeric(10)
+
+plot(Boston$dis, Boston$nox, xlab = "Distance to Employment Centers", ylab = "NOx Concentration", main = "Polynomial Regression", col = "blue")
+
+for (deg in 1:10) {
+  fit <- lm(nox ~ poly(dis, deg, raw = TRUE), data = Boston)
+  
+  residuals <- residuals(fit)
+  
+  rss <- sum(residuals^2)
+  
+  rss_values[deg] <- rss
+  
+  lines(sort(Boston$dis), fitted(fit)[order(Boston$dis)], col = rainbow(10)[deg], lwd = 2)
+}
+
+cat("Polynomial Degree | Residual Sum of Squares\n")
+for (deg in 1:10) {
+  cat(sprintf("%17d | %f\n", deg, rss_values[deg]))
+}
 ```
 
 Your answer:
@@ -392,8 +418,30 @@ Please write your answer in full sentences.
 
 Your code:
 ```{r,echo=TRUE}
-#
-#
+library(caret)
+num_folds <- 10
+
+mse_values <- numeric(10)
+
+for (deg in 1:10) {
+  formula <- as.formula(paste("nox ~ poly(dis, ", deg, ", raw = TRUE)"))
+  
+  cv_model <- train(
+    formula,
+    data = Boston,
+    method = "lm",
+    trControl = trainControl(method = "cv", number = num_folds),
+    metric = "RMSE"
+  )
+  
+  # Store the mean squared error (MSE) for the current degree
+  mse_values[deg] <- cv_model$results$RMSE
+}
+
+plot(1:10, mse_values, type = "b", xlab = "Degree of Polynomial", ylab = "Cross-Validation RMSE", main = "Cross-Validation for Polynomial Degree Selection")
+
+optimal_degree <- which.min(mse_values)
+cat("Optimal Degree:", optimal_degree, "\n")
 ```
 
 Your answer:
@@ -409,8 +457,14 @@ Please write your answer in full sentences.
 
 Your code:
 ```{r,echo=TRUE}
-#
-#
+
+fit <- lm(nox ~ bs(dis, df = 4), data = Boston)
+
+summary(fit)
+
+# Plot data and spline fit
+plot(Boston$dis, Boston$nox, xlab = "Distance to Employment Centers", ylab = "NOx Concentration", main = "Regression Spline Fit", col = "blue")
+lines(sort(Boston$dis), predict(fit, data.frame(dis = sort(Boston$dis))), col = "red", lwd = 2)
 ```
 
 Your answer:
@@ -426,8 +480,29 @@ Please write your answer in full sentences.
 
 Your code:
 ```{r,echo=TRUE}
-#
-#
+df_range <- 3:10
+
+rss_values <- numeric(length(df_range))
+
+plot(Boston$dis, Boston$nox, xlab = "Distance to Employment Centers", ylab = "NOx Concentration", main = "Regression Splines for Different Degrees of Freedom", col = "blue")
+
+for (i in 1:length(df_range)) {
+  # Fit regression spline
+  fit <- lm(nox ~ bs(dis, df = df_range[i]), data = Boston)
+  
+  residuals <- residuals(fit)
+  
+  rss <- sum(residuals^2)
+  
+  rss_values[i] <- rss
+  
+  lines(sort(Boston$dis), predict(fit, data.frame(dis = sort(Boston$dis))), col = rainbow(length(df_range))[i], lwd = 2)
+}
+
+cat("Degrees of Freedom | Residual Sum of Squares\n")
+for (i in 1:length(df_range)) {
+  cat(sprintf("%18d | %f\n", df_range[i], rss_values[i]))
+}
 ```
 
 Your answer:
@@ -443,8 +518,28 @@ Please write your answer in full sentences.
 
 Your code:
 ```{r,echo=TRUE}
-#
-#
+df_range <- 3:10
+
+mse_values <- numeric(length(df_range))
+
+for (i in 1:length(df_range)) {
+  formula <- as.formula(paste("nox ~ bs(dis, df = ", df_range[i], ")"))
+  
+  cv_model <- train(
+    formula,
+    data = Boston,
+    method = "lm",
+    trControl = trainControl(method = "cv", number = 10),
+    metric = "RMSE"
+  )
+  
+  mse_values[i] <- cv_model$results$RMSE
+}
+
+plot(df_range, mse_values, type = "b", xlab = "Degrees of Freedom", ylab = "Cross-Validation RMSE", main = "Cross-Validation for Regression Spline Degree Selection")
+
+optimal_df <- df_range[which.min(mse_values)]
+cat("Optimal Degrees of Freedom:", optimal_df, "\n")
 ```
 
 Your answer:
