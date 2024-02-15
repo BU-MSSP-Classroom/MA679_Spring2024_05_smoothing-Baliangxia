@@ -291,8 +291,37 @@ You can do this as follows:
 
 Your code:
 ```{r,echo=TRUE}
-#
-#
+set.seed(123)  # for reproducibility
+n <- 100
+X1 <- rnorm(n)
+X2 <- rnorm(n)
+beta0_true <- 2
+beta1_true <- 3
+beta2_true <- 1.5
+epsilon <- rnorm(n, mean = 0, sd = 0.5)
+Y <- beta0_true + beta1_true * X1 + beta2_true * X2 + epsilon
+
+beta1 <- 2  # Initialize to a random value
+
+beta_values <- matrix(NA, nrow = 1000, ncol = 3)
+
+for (i in 1:1000) {
+  a <- Y - beta1 * X1
+  model <- lm(a ~ X2)
+  beta2 <- coef(model)[2]
+  
+  a <- Y - beta2 * X2
+  model <- lm(a ~ X1)
+  beta1 <- coef(model)[2]
+  
+  beta_values[i, ] <- c(coef(model)[1], beta1, beta2)
+}
+
+plot(1:1000, beta_values[, 1], type = 'l', col = 'red', xlab = 'Iteration', ylab = 'Coefficient Estimate', main = 'Estimates of beta0, beta1, beta2')
+lines(1:1000, beta_values[, 2], col = 'blue')
+lines(1:1000, beta_values[, 3], col = 'green')
+legend('topright', legend = c('beta0', 'beta1', 'beta2'), col = c('red', 'blue', 'green'), lty = 1)
+
 ```
 
 
@@ -302,8 +331,16 @@ Your code:
 
 Your code:
 ```{r,echo=TRUE}
-#
-#
+lm_model <- lm(Y ~ X1 + X2)
+
+plot(1:1000, beta_values[, 1], type = 'l', col = 'red', xlab = 'Iteration', ylab = 'Coefficient Estimate', main = 'Estimates of beta0, beta1, beta2')
+lines(1:1000, beta_values[, 2], col = 'blue')
+lines(1:1000, beta_values[, 3], col = 'green')
+abline(h = coef(lm_model)[1], col = 'red', lty = 2)
+abline(h = coef(lm_model)[2], col = 'blue', lty = 2)
+abline(h = coef(lm_model)[3], col = 'green', lty = 2)
+legend('topright', legend = c('beta0', 'beta1', 'beta2', 'lm beta0', 'lm beta1', 'lm beta2'), col = c('red', 'blue', 'green', 'red', 'blue', 'green'), lty = c(1, 1, 1, 2, 2, 2))
+
 ```
 
 Your answer:
@@ -320,8 +357,17 @@ Please write your answer in full sentences.
 
 Your code:
 ```{r,echo=TRUE}
-#
-#
+euclidean_distance <- function(x, y) {
+  sqrt(sum((x - y)^2))
+}
+
+distances <- apply(beta_values, 1, function(row) euclidean_distance(row, coef(lm_model)))
+
+tolerance <- 0.01  
+iterations_to_convergence <- which.min(distances < tolerance)
+
+print(iterations_to_convergence)
+
 ```
 
 Your answer:
@@ -338,8 +384,50 @@ Please write your answer in full sentences.
 
 Your code:
 ```{r,echo=TRUE}
-#
-#
+# Generate data
+set.seed(123)
+n <- 100
+p <- 100
+X <- matrix(rnorm(n * p), nrow = n)
+beta_true <- rnorm(p)
+epsilon <- rnorm(n)
+Y <- X %*% beta_true + epsilon
+
+# Check for missing values
+complete_cases <- complete.cases(cbind(Y, X))
+X <- X[complete_cases, ]
+Y <- Y[complete_cases]
+
+# Perform backfitting iterations
+beta_values <- matrix(NA, nrow = 1000, ncol = p)
+
+for (i in 1:1000) {
+  for (j in 1:p) {
+    a <- Y - X[, -j] %*% beta_values[i, -j]
+    model <- try(lm(a ~ X[, j]), silent = TRUE)
+    if (!inherits(model, "try-error")) {
+      beta_values[i, j] <- coef(model)[2]
+    } else {
+      beta_values[i, j] <- NA
+    }
+  }
+}
+
+# Calculate Euclidean distance between backfitting coefficients and true coefficients
+distances <- apply(beta_values, 1, function(row) sqrt(sum((row - beta_true)^2)))
+
+# Find the iteration where the distance becomes negligible
+tolerance <- 0.01  # Define a tolerance level
+iterations_to_convergence <- which.min(distances < tolerance)
+
+# Plot the convergence if there are finite values to plot
+if (any(is.finite(distances))) {
+  plot(1:1000, distances, type = "l", xlab = "Iteration", ylab = "Distance to True Coefficients", main = "Convergence of Backfitting Coefficients")
+  abline(h = tolerance, col = "red", lty = 2)
+} else {
+  print("No finite values to plot.")
+}
+
 ```
 
 Your answer:
