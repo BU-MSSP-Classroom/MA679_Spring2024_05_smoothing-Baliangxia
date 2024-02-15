@@ -225,8 +225,32 @@ Fit some of the non-linear models investigated in chapter 7 to the `Auto` data s
 
 Your code:
 ```{r,echo=TRUE}
-#
-#
+library(ISLR)
+
+data("Auto")
+
+lm_fit <- lm(mpg ~ horsepower, data = Auto)
+
+quad_fit <- lm(mpg ~ horsepower + I(horsepower^2), data = Auto)
+
+cubic_fit <- lm(mpg ~ horsepower + I(horsepower^2) + I(horsepower^3), data = Auto)
+
+gam_fit <- gam(mpg ~ s(horsepower), data = Auto)
+
+par(mfrow = c(2, 2))
+plot(Auto$horsepower, Auto$mpg, xlab = "Horsepower", ylab = "MPG", main = "Scatterplot with Linear Fit")
+abline(lm_fit, col = "red")
+
+plot(Auto$horsepower, Auto$mpg, xlab = "Horsepower", ylab = "MPG", main = "Scatterplot with Quadratic Fit")
+points(Auto$horsepower, predict(quad_fit), col = "blue", pch = 20)
+
+plot(Auto$horsepower, Auto$mpg, xlab = "Horsepower", ylab = "MPG", main = "Scatterplot with Cubic Fit")
+points(Auto$horsepower, predict(cubic_fit), col = "green", pch = 20)
+
+legend("topright", legend = c("Data", "Linear Fit", "Quadratic Fit", "Cubic Fit"),
+       col = c("black", "red", "blue", "green"), pch = c(1, NA, 20, 20), lty = c(NA, 1, NA, NA))
+
+plot(gam_fit, se = TRUE, col = "blue", main = "GAM Fit: MPG ~ Horsepower")
 ```
 
 Your answer:
